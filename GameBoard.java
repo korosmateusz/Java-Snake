@@ -14,6 +14,8 @@ public class GameBoard
 	private final int Y_SIZE = 800;	//board size
 	private int speed = 75;	//game difficulty
 	private GameField field;
+	private int score = 0;
+	private JTextField textField = new JTextField(20);
 	/***Snake attributes***/
 	private int xAtStart = 600;
 	private int yAtStart = 400;			//start coordinates of snake
@@ -36,6 +38,8 @@ public class GameBoard
 		field = new GameField();
 		field.setFocusable(true);
 		field.addKeyListener(new KeyListener());
+		field.add(textField);
+		textField.setEditable(false);
 		xCoordinates[0] = xAtStart;
 		yCoordinates[0] = yAtStart;	//sets the beginning location of snake's head
 		spawnApple();	//spawns first apple
@@ -105,10 +109,11 @@ public class GameBoard
 	
 	private void checkIfAppleEaten()
 	{
-		/*if snake's head collides with an apple, increments length and spawns another apple*/
+		/*if snake's head collides with an apple, increments length, adds score and spawns another apple*/
 		if (xAppleCoordinate == xCoordinates[0] && yAppleCoordinate == yCoordinates[0])
 		{
 			length++;
+			score += 10;
 			spawnApple();
 		}
 	}	//function checkIfAppleEaten
@@ -119,10 +124,10 @@ public class GameBoard
 		/*Checks whether snake has hit itself*/
 		for (int i = 1; i < length; i++)
 			if (xCoordinates[0] == xCoordinates[i] && yCoordinates[0] == yCoordinates[i])
-				endGame = new GameOver(game);
+				endGame = new GameOver(game, score);
 		/*Checks whether snake has hit a wall*/
 		if (xCoordinates[0] < SNAKE_SIZE || xCoordinates[0] >= X_SIZE - SNAKE_SIZE || yCoordinates[0] < SNAKE_SIZE || yCoordinates[0] >= Y_SIZE - SNAKE_SIZE)	
-			endGame = new GameOver(game);
+			endGame = new GameOver(game, score);
 	}	//function checkIfGameOver
 	
 	class GameField extends JPanel
@@ -142,6 +147,8 @@ public class GameBoard
 			/*paints snake's head*/
 			g.setColor(Color.yellow);
 			g.fillRect(xCoordinates[0], yCoordinates[0], SNAKE_SIZE, SNAKE_SIZE);
+			/*displays current score*/
+			textField.setText("Your score: " + Integer.toString(score));
 			/*paints the rest of snake's body*/
 			g.setColor(Color.green);
 			for (int i = 1; i < length; i++)

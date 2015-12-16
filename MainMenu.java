@@ -23,14 +23,22 @@ class MainMenu extends JPanel implements Runnable
 		invalidate();
 		revalidate();
 		System.gc();
+		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		/*create a menu for choosing game difficulty*/
 		JLabel difficulty = new JLabel("Choose game difficulty");
+		difficulty.setForeground(Color.white);
+		difficulty.setAlignmentX(Component.CENTER_ALIGNMENT);
+		/*create buttons, add action listeners and locate buttons in center*/
 		JButton easyModeButton = new JButton("Easy");
 		easyModeButton.addActionListener(new EasyModeListener());
+		easyModeButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 		JButton mediumModeButton = new JButton("Medium");
 		mediumModeButton.addActionListener(new MediumModeListener());
+		mediumModeButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 		JButton hardModeButton = new JButton("Hard");
 		hardModeButton.addActionListener(new HardModeListener());
+		hardModeButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+		/*set background color and add components to JPanel*/
 		setBackground(Color.black);
 		add(difficulty);
 		add(easyModeButton);
@@ -68,7 +76,6 @@ class MainMenu extends JPanel implements Runnable
 		public void actionPerformed(ActionEvent event)
 		{
 			speed = 100;
-			System.out.println(speed);
 		}
 	}
 	
@@ -77,7 +84,6 @@ class MainMenu extends JPanel implements Runnable
 		public void actionPerformed(ActionEvent event)
 		{
 			speed = 75;
-			System.out.println(speed);
 		}
 	}
 	
@@ -86,7 +92,6 @@ class MainMenu extends JPanel implements Runnable
 		public void actionPerformed(ActionEvent event)
 		{
 			speed = 45;
-			System.out.println(speed);
 		}
 	}
 }

@@ -7,6 +7,7 @@ class SnakeGame
 	private JFrame frame;
 	private GameBoard board;
 	private int speed;
+	private Color color;
 	
 	public static void main(String[] args) 
 	{
@@ -38,7 +39,6 @@ class SnakeGame
 		}
 		catch(Exception exc)
 		{
-			System.out.println("Menu thread was interrupted");
 			exc.printStackTrace();
 		}
 		/*restart frame and add game board in order to start a game */
@@ -47,7 +47,7 @@ class SnakeGame
 		frame.getContentPane().invalidate();
 		frame.getContentPane().revalidate();
 		frame.getContentPane().repaint();
-		board.startGame(this, speed);
+		board.startGame(this, speed, color);
 	}	//function initializeGame
 	
 	public void restartGame()	//function used to restart game after losing, resets JFrame and initializes game from the beginning
@@ -64,5 +64,10 @@ class SnakeGame
 	{
 		speed = chosenSpeed;
 	}	//function setSpeed
+	
+	public void setColor(Color chosenColor)
+	{
+		color = chosenColor;
+	}	//function setColor
 	
 }	//class SnakeGame

@@ -28,6 +28,7 @@ public class GameBoard
 	private int[] xCoordinates = new int[X_SIZE];
 	private int[] yCoordinates = new int[Y_SIZE];	//arrays that hold the location of snake's head and body
 	private static boolean isWaitingForResponse = false; //flag that checks whether a snake is about to move, prevents the snake from turning backwards when buttons are being pressed too fast
+	private Color color;
 	/***Apple attributes***/
 	private int xAppleCoordinate = SNAKE_SIZE; 
 	private int yAppleCoordinate = SNAKE_SIZE; //sets starting coordinates of apple just in case the function fails to do it
@@ -45,11 +46,12 @@ public class GameBoard
 		spawnApple();	//spawns first apple
 	}	//function preparetoStartGame
 	
-	public void startGame(SnakeGame game, int chosenSpeed)
+	public void startGame(SnakeGame game, int chosenSpeed, Color chosenColor)
 	{
 		while(true)
 		{
 			speed = chosenSpeed;	//set speed chosen by player
+			color = chosenColor;	//set color chosen by player
 			moveSnake();
 			if (isWaitingForResponse) isWaitingForResponse = false;	//sends a signal that action has been performed so the program can expect another order
 			checkIfGameOver(game);	// checks if player hit a snake or a wall
@@ -150,7 +152,7 @@ public class GameBoard
 			/*displays current score*/
 			textField.setText("Your score: " + Integer.toString(score));
 			/*paints the rest of snake's body*/
-			g.setColor(Color.green);
+			g.setColor(color);
 			for (int i = 1; i < length; i++)
 				g.fillRect(xCoordinates[i], yCoordinates[i], SNAKE_SIZE, SNAKE_SIZE);
 		}	//function paintComponent		

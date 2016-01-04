@@ -24,8 +24,8 @@ class MainMenu extends JPanel implements Runnable
 		removeAll();
 		invalidate();
 		revalidate();
-		System.gc();
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+		
 		/*create a menu for choosing game difficulty*/
 		JLabel difficulty = new JLabel("Choose game difficulty");
 		difficulty.setForeground(Color.white);
@@ -80,6 +80,7 @@ class MainMenu extends JPanel implements Runnable
 		group.add(greenColor);
 		group.add(redColor);
 		group.add(blueColor);
+		
 		/*set background color and add components to JPanel*/
 		setBackground(Color.black);
 		add(colorLabel);
@@ -90,8 +91,9 @@ class MainMenu extends JPanel implements Runnable
 		add(easyModeButton);
 		add(mediumModeButton);
 		add(hardModeButton);
-		gameReference.frame.pack();
+		gameReference.getFrame().pack();
 		repaint();
+		
 		/*wait until player chooses game speed*/
 		while(speed == 0) 
 		{

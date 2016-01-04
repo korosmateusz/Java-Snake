@@ -4,7 +4,7 @@ import javax.swing.*;
 /*main game class, initiating program etc*/
 class SnakeGame 
 {
-	public JFrame frame;
+	private JFrame frame;
 	private GameBoard board;
 	private int speed;
 	private Color color;
@@ -56,7 +56,6 @@ class SnakeGame
 		frame.getContentPane().invalidate();
 		frame.getContentPane().revalidate();
 		frame.getContentPane().repaint();
-		System.gc();
 		initializeGame();
 	}	//function restartGame
 	
@@ -69,5 +68,10 @@ class SnakeGame
 	{
 		color = chosenColor;
 	}	//function setColor
+	
+	public JFrame getFrame()
+	{
+		return frame;
+	}
 	
 }	//class SnakeGame

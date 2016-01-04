@@ -4,7 +4,7 @@ import javax.swing.*;
 /*main game class, initiating program etc*/
 class SnakeGame 
 {
-	private JFrame frame;
+	public JFrame frame;
 	private GameBoard board;
 	private int speed;
 	private Color color;
@@ -27,7 +27,7 @@ class SnakeGame
 		/*prepare board and size of frame*/
 		board = new GameBoard();
 		board.prepareToStartGame();
-		frame.setSize(board.getX_SIZE(),board.getY_SIZE());
+		frame.setMinimumSize(new Dimension(board.getX_SIZE(),board.getY_SIZE()));
 		/*create and display main menu for choosing game difficulty*/
 		MainMenu mainMenu = new MainMenu(this);
 		mainMenu.start();

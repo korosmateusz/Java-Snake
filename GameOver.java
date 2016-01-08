@@ -1,12 +1,20 @@
-import java.awt.*;
+package snake;
 import javax.swing.*;
 
-/*class used to display a communicate after losing*/
+/**
+ * Class used to display a communication after losing.
+ */
 class GameOver 
 {
+	/**
+	 * Constructor of a class which takes care of ending the game.
+	 * @param game Reference to game class
+	 * @param score Number of points a player managed to get
+	 */
 	public GameOver(final SnakeGame game, int score)
 	{
 		Object[] options = {"Start a new game", "Close"};	//options to choose after losing
+		
 		/*create JOptionPane to choose what player wants to do next*/
 		Object selectedValue = JOptionPane.showInputDialog(null,
 				"Your score: " + Integer.toString(score) + "\nWhat do you want to do?", "GAME OVER",

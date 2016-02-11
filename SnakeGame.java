@@ -61,6 +61,7 @@ class SnakeGame
 		frame.getContentPane().add(board.getField());
 		frame.getContentPane().invalidate();
 		frame.getContentPane().revalidate();
+		frame.pack();
 		frame.getContentPane().repaint();
 		board.startGame(this, speed, color);
 	}	//function initializeGame

@@ -4,7 +4,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 
 /**
@@ -15,6 +19,7 @@ class MainMenu extends JPanel implements Runnable
 	private int speed = 0;
 	private SnakeGame gameReference;
 	private Thread t;
+	BufferedImage snakeLogo;
 	
 	/**
 	 * Main menu constructor.
@@ -39,10 +44,6 @@ class MainMenu extends JPanel implements Runnable
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		
 		/*create a menu for choosing game difficulty*/
-		JLabel title = new JLabel("SNAKE GAME BY MATEUSZ KOROS");
-		title.setForeground(Color.green);
-		title.setAlignmentX(Component.CENTER_ALIGNMENT);
-		title.setFont(new Font("Serif", Font.PLAIN, 23));
 		JLabel difficulty = new JLabel("Choose game difficulty");
 		difficulty.setForeground(Color.white);
 		difficulty.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -102,9 +103,18 @@ class MainMenu extends JPanel implements Runnable
 		group.add(redColor);
 		group.add(blueColor);
 		
+		/*load image*/
+		try 
+		{
+		snakeLogo = ImageIO.read(MainMenu.class.getResourceAsStream("/SnakeLogo.png"));
+		} catch (IOException e1) 
+		{
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+			System.exit(1);
+		}
 		/*set background color and add components to JPanel*/
 		setBackground(Color.black);
-		add(title);
 		add(colorLabel);
 		add(greenColor);
 		add(redColor);
@@ -138,6 +148,15 @@ class MainMenu extends JPanel implements Runnable
 	{
 		t = new Thread(this);
 		t.start();
+	}
+	
+	/**
+	 * Function called by repaint, overriden to pain an image
+	 */
+	public void paintComponent(Graphics g)
+	{
+		super.paintComponent(g);
+		g.drawImage(snakeLogo, this.getWidth()/2 - 245, this.getHeight()/2 - 245, null);
 	}
 	
 	/**
@@ -178,7 +197,7 @@ class MainMenu extends JPanel implements Runnable
 	{
 		public void actionPerformed(ActionEvent event)
 		{
-			speed = 45;
+			speed = 40;
 		}
 	}
 }//class MainMenu

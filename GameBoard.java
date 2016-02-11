@@ -2,7 +2,10 @@ package snake;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 
 /**
@@ -15,10 +18,13 @@ public class GameBoard
 	/***Game attributes***/
 	private final int X_SIZE = 1200;
 	private final int Y_SIZE = 800;	//board size
-	private int speed = 75;	//game difficulty
+	private int speed = 75;	//default game difficulty
 	private GameField field;
 	private int score = 0;
 	private JTextField playerScore = new JTextField(20);
+	private final int SPEED_LIMIT = 35;	//maximum game speed
+	BufferedImage snakeLogo;
+	BufferedImage snakeLogoNegative;
 	/***Snake attributes***/
 	private int xAtStart = 600;
 	private int yAtStart = 400;			//start coordinates of snake
@@ -32,9 +38,18 @@ public class GameBoard
 	private int[] yCoordinates = new int[Y_SIZE];	//arrays that hold the location of snake's head and body
 	private static boolean isWaitingForResponse = false; //flag that checks whether a snake is about to move, prevents the snake from turning backwards when buttons are being pressed too fast
 	private Color color = Color.green;
+	private long enhancedAppleEatenTime = -1; //time at which enhanced apple was eaten, if it equals -1 then it wasn't. 
+											  //That time is needed to determine how long the snake is going to blink after eating an enhanced apple
+	private final int BLINKING_TIME = 5;	//time of blinking after eating enhanced apple
 	/***Apple attributes***/
+	private final double CHANCE_OF_ENHANCED_APPLE = 0.1;
+	private int enhancedAppleTime = 5;
+	long enhancedAppleStartTime;	//time at which enhanced apple was spawned (using System.nanoTime)
+	private boolean isEnhancedApple = false;	//flag that checks whether enhanced apple is on board
 	private int xAppleCoordinate = SNAKE_SIZE; 
 	private int yAppleCoordinate = SNAKE_SIZE; //sets starting coordinates of apple just in case the function fails to do it
+	private int xEnhancedAppleCoordinate = X_SIZE-SNAKE_SIZE; 
+	private int yEnhancedAppleCoordinate = Y_SIZE-SNAKE_SIZE; //sets starting coordinates of enhanced apple just in case the function fails to do it
 	
 	
 	/**
@@ -44,10 +59,23 @@ public class GameBoard
 	public void prepareToStartGame()
 	{
 		field = new GameField();
+		field.setLayout(null);
 		field.setFocusable(true);
 		field.addKeyListener(new KeyListener());
 		field.add(playerScore);
+		playerScore.setBounds(X_SIZE/2-75, 0, 150, SNAKE_SIZE);
+		field.setPreferredSize(new Dimension (X_SIZE, Y_SIZE));
 		playerScore.setEditable(false);
+		try 
+		{
+		snakeLogo = ImageIO.read(MainMenu.class.getResourceAsStream("/SnakeLogo.png"));
+		snakeLogoNegative = ImageIO.read(MainMenu.class.getResourceAsStream("/SnakeLogoNegative.png"));
+		} catch (IOException e1) 
+		{
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+			System.exit(1);
+		}
 		xCoordinates[0] = xAtStart;
 		yCoordinates[0] = yAtStart;	//sets the beginning location of snake's head
 		spawnApple();	//spawns first apple
@@ -63,12 +91,15 @@ public class GameBoard
 	{
 		speed = chosenSpeed;	//set speed chosen by player
 		color = chosenColor;	//set color chosen by player
+		enhancedAppleTime = speed/10;	//set enhanced apple time depending on game speed
 		while(true)
 		{
 			moveSnake();
 			if (isWaitingForResponse) isWaitingForResponse = false;	//sends a signal that action has been performed so the program can expect another order
 			checkIfGameOver(game);	// checks if player hit a snake or a wall
 			checkIfAppleEaten();	//checks if a snake has eaten an apple
+			checkifEnhancedAppleTimePassed();
+			field.revalidate();
 			field.repaint();
 			try
 			{
@@ -129,17 +160,86 @@ public class GameBoard
 	}	//function spawnApple
 	
 	/**
+	 * Finds a random place for an enhanced apple to spawn and places it on board.
+	 */
+	private void spawnEnhancedApple()
+	{
+		/*sets the range of locations at which enhanced apple can spawn*/
+		int xRange = X_SIZE - 2*SNAKE_SIZE + 1;
+		int yRange = Y_SIZE - 2*SNAKE_SIZE + 1;
+		
+		/*sets random x and y coordinates of apple*/
+		xEnhancedAppleCoordinate = (int)(Math.random() * xRange) + SNAKE_SIZE; 
+		yEnhancedAppleCoordinate = (int)(Math.random() * yRange) + SNAKE_SIZE;
+		
+		/*makes coordinates a multiple of SNAKE_SIZE*/
+		int tmp = xEnhancedAppleCoordinate % SNAKE_SIZE;
+		xEnhancedAppleCoordinate -= tmp;
+		tmp = yEnhancedAppleCoordinate % SNAKE_SIZE;
+		yEnhancedAppleCoordinate -= tmp;
+		
+		/*ensures that apple does not spawn out of board or on a snake*/
+		if (xEnhancedAppleCoordinate < SNAKE_SIZE) xEnhancedAppleCoordinate += SNAKE_SIZE;
+		if (yEnhancedAppleCoordinate < SNAKE_SIZE) yEnhancedAppleCoordinate += SNAKE_SIZE;
+		if (xEnhancedAppleCoordinate >= X_SIZE - SNAKE_SIZE) xEnhancedAppleCoordinate -= (2*SNAKE_SIZE);
+		if (yEnhancedAppleCoordinate >= Y_SIZE - SNAKE_SIZE) yEnhancedAppleCoordinate -= (2*SNAKE_SIZE);
+		for (int i = 0; i < length; i++)
+			if (xEnhancedAppleCoordinate == xCoordinates[i] && yEnhancedAppleCoordinate == yCoordinates[i])
+				spawnEnhancedApple();	//if an enhanced apple is located on a snake, another location is found
+		if (xEnhancedAppleCoordinate == xAppleCoordinate && yEnhancedAppleCoordinate == yAppleCoordinate)
+			spawnEnhancedApple();	//if an enhanced apple is located on a regular apple, another location is found
+		enhancedAppleStartTime = System.nanoTime();
+		isEnhancedApple = true;
+	}	//function spawnEnhancedApple
+	
+	/**
+	 * Checks if it is time the enhanced apple vanished.
+	 */
+	private void checkifEnhancedAppleTimePassed()
+	{
+		long duration = (System.nanoTime() - enhancedAppleStartTime) / 1000000000;	//how long enhanced apple was on board in seconds
+		if (duration > enhancedAppleTime)
+			isEnhancedApple = false;	//after a set time enhanced apple vanishes
+	}
+	
+	/**
 	 * Checks if snake's head is located in the same place as an apple.
 	 * If it is, the snake gets longer and calls a function to spawn another apple.
 	 */
 	private void checkIfAppleEaten()
+	
 	{
-		/*if snake's head collides with an apple, increments length, adds score and spawns another apple*/
+		/*if snake's head collides with an apple, increments length, adds score, speeds up the game and spawns another apple*/
 		if (xAppleCoordinate == xCoordinates[0] && yAppleCoordinate == yCoordinates[0])
 		{
-			length++;
+			length += 3;
+			for (int i = 1; i < 4; i++)	//sets coordinates of new parts of snake
+			{
+				xCoordinates[length-i] = xCoordinates[length-4];
+				yCoordinates[length-i] = yCoordinates[length-4];
+			}
 			score += 10;
+			if (speed >=SPEED_LIMIT)	//each apple eaten speeds up the game up to a set limit
+				speed--;
 			spawnApple();
+			if (Math.random() > (1 - CHANCE_OF_ENHANCED_APPLE))	//checks whether enhanced apple should be spawned
+				if (!isEnhancedApple)
+					spawnEnhancedApple();
+					
+		}
+		
+		if ((xEnhancedAppleCoordinate == xCoordinates[0] && yEnhancedAppleCoordinate == yCoordinates[0]) && isEnhancedApple)
+		{
+			length += 3;
+			for (int i = 1; i < 4; i++)	//sets coordinates of new parts of snake
+			{
+				xCoordinates[length-i] = xCoordinates[length-4];
+				yCoordinates[length-i] = yCoordinates[length-4];
+			}
+			score += 50;
+			speed +=15;	//enhanced apple slows the game to make it easier
+			enhancedAppleEatenTime = System.nanoTime();
+			isEnhancedApple = false;
 		}
 	}	//function checkIfAppleEaten
 	
@@ -166,30 +266,110 @@ public class GameBoard
 	 */
 	class GameField extends JPanel
 	{
+		private boolean blinkFlag = false;	//flag used for screen blinking when enhanced apple is on board
 		/**
 		 * Paints game components, that is a snake, apple, frame around the board and so on.
 		 */
 		public void paintComponent(Graphics g)
 		{
 			requestFocusInWindow();
-			/*sets frame around board*/
-			g.setColor(Color.white);
-			g.fillRect(0, 0, this.getWidth(), this.getHeight());
+			
+			/*sets frame around board, which blinks if enhanced apple is on board*/
+			if (isEnhancedApple)
+			{
+				if (!blinkFlag)
+					{
+					g.setColor(Color.orange);
+					g.fillRect(0, 0, X_SIZE, Y_SIZE);
+					blinkFlag = true;
+					}
+				else 
+					{
+					blinkFlag = false;
+					g.setColor(Color.white);
+					g.fillRect(0, 0, X_SIZE, Y_SIZE);
+					}
+			}
+			else
+			{
+				g.setColor(Color.white);
+				g.fillRect(0, 0, X_SIZE, Y_SIZE);
+			}
+			
 			/*resets background*/
 			g.setColor(Color.black);
-			g.fillRect(SNAKE_SIZE,SNAKE_SIZE, this.getWidth()-2*SNAKE_SIZE, this.getHeight()-2*SNAKE_SIZE);
-			/*paints an apple*/
-			g.setColor(Color.red);
-			g.fillOval(xAppleCoordinate, yAppleCoordinate, SNAKE_SIZE, SNAKE_SIZE);
+			g.fillRect(SNAKE_SIZE,SNAKE_SIZE, X_SIZE-2*SNAKE_SIZE, Y_SIZE-2*SNAKE_SIZE);
+			g.drawImage(snakeLogo, this.getWidth()/2 - 245, this.getHeight()/2-245, null);
+			
+			/*displays current score*/
+			playerScore.setText("Your score: " + Integer.toString(score));
+			
+			/*paints snake's body and blinking logo if enhanced apple has been eaten*/
+			/*after a set amount after eating enhanced apple, each part of snake has a random RGB color*/
+			if (enhancedAppleEatenTime != -1)
+			{
+				if ((System.nanoTime() - enhancedAppleEatenTime)/1000000000  > BLINKING_TIME)	//ends blinking after a set time
+					enhancedAppleEatenTime = -1;
+				
+				/*logo blinks after eating an enhanced apple*/
+				if (!blinkFlag)
+				{
+					g.drawImage(snakeLogo, this.getWidth()/2 - 245, this.getHeight()/2-245, null);
+					blinkFlag = true;
+				}
+				else 
+				{
+					g.drawImage(snakeLogoNegative, this.getWidth()/2 - 245, this.getHeight()/2-245, null);
+					blinkFlag = false;
+				}
+				
+				/*draws blinking snake*/
+				for (int i = 1; i < length; i++)
+				{
+					g.setColor(new Color((int)(Math.random()*255), (int)(Math.random()*255), (int)(Math.random()*255)));	//sets a random RGB color	
+					g.fillRect(xCoordinates[i], yCoordinates[i], SNAKE_SIZE, SNAKE_SIZE);
+				}
+			}
+			/*if enhanced apple hasn't been eaten*/
+			else
+			{
+				g.setColor(color);
+				for (int i = 1; i < length; i++)
+					g.fillRect(xCoordinates[i], yCoordinates[i], SNAKE_SIZE, SNAKE_SIZE);
+				g.setColor(Color.black);
+				for (int i = 1; i < length; i++)
+					g.drawRect(xCoordinates[i], yCoordinates[i], SNAKE_SIZE, SNAKE_SIZE);
+			}
+			
 			/*paints snake's head*/
 			g.setColor(Color.yellow);
 			g.fillRect(xCoordinates[0], yCoordinates[0], SNAKE_SIZE, SNAKE_SIZE);
-			/*displays current score*/
-			playerScore.setText("Your score: " + Integer.toString(score));
-			/*paints the rest of snake's body*/
-			g.setColor(color);
-			for (int i = 1; i < length; i++)
-				g.fillRect(xCoordinates[i], yCoordinates[i], SNAKE_SIZE, SNAKE_SIZE);
+			g.setColor(Color.black);
+			g.drawRect(xCoordinates[0], yCoordinates[0], SNAKE_SIZE, SNAKE_SIZE);
+			
+			/*paints an enhanced apple*/
+			if (isEnhancedApple)
+			{
+				Graphics2D g2d = (Graphics2D) g;
+				int appleRed = (int) (Math.random() * 255);
+				int appleGreen = (int) (Math.random() * 255);
+				int appleBlue = (int) (Math.random() * 255);
+				Color appleStartColor = new Color(appleRed, appleGreen, appleBlue);
+				
+				appleRed = (int) (Math.random() * 255);
+				appleGreen = (int) (Math.random() * 255);
+				appleBlue = (int) (Math.random() * 255);
+				Color appleEndColor = new Color(appleRed, appleGreen, appleBlue);
+				
+				GradientPaint gradient = new GradientPaint(1, 1, appleStartColor, 5, 5, appleEndColor);
+				g2d.setPaint(gradient);
+				g2d.fillOval(xEnhancedAppleCoordinate, yEnhancedAppleCoordinate, SNAKE_SIZE, SNAKE_SIZE);
+			}
+			
+			/*paints an apple*/
+			g.setColor(Color.red);
+			g.fillOval(xAppleCoordinate, yAppleCoordinate, SNAKE_SIZE, SNAKE_SIZE);
+			
 		}	//function paintComponent		
 	}	//class GameField
 	
@@ -242,8 +422,8 @@ public class GameBoard
 	}	//class KeyListener
 	
 	/**
-	 * Gets the width of game board so that a frame can have a correct size.
-	 * @return width needed to correctly display a game
+	 * Gets the minimal size of game board.
+	 * It is needed for frame not to have too small size before all elements are placed on board.
 	 */
 	public int getX_SIZE()
 	{
@@ -251,8 +431,8 @@ public class GameBoard
 	}
 	
 	/**
-	 * Gets the height of game board so that a frame can have a correct size.
-	 * @return height needed to correctly display a game
+	 * Gets the minimal size of game board.
+	 * It is needed for frame not to have too small size before all elements are placed on board.
 	 */
 	public int getY_SIZE()
 	{

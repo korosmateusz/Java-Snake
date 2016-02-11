@@ -40,11 +40,14 @@ class SnakeGame
 	private void initializeGame()
 	{
 		/*prepare board and size of frame*/
+		GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();	//get screen resolution to adjust game size
+		int screenWidth = gd.getDisplayMode().getWidth();
+		int screenHeight = gd.getDisplayMode().getHeight();
 		board = new GameBoard();
-		board.prepareToStartGame();
+		board.prepareToStartGame(screenWidth, screenHeight);
 		frame.setMinimumSize(new Dimension(board.getX_SIZE(),board.getY_SIZE()));
 		/*create and display main menu for choosing game difficulty*/
-		MainMenu mainMenu = new MainMenu(this);
+		MainMenu mainMenu = new MainMenu(this, board.getlogoSize());
 		mainMenu.start();
 		frame.getContentPane().add(mainMenu);
 		frame.setVisible(true);

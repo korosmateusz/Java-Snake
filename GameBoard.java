@@ -14,20 +14,20 @@ import javax.swing.*;
  */
 public class GameBoard
 {
-
 	/***Game attributes***/
-	private final int X_SIZE = 1200;
-	private final int Y_SIZE = 800;	//board size
+	private int X_SIZE = 1200;
+	private int Y_SIZE = 800;	//default board size
 	private int speed = 75;	//default game difficulty
 	private GameField field;
 	private int score = 0;
 	private JTextField playerScore = new JTextField(20);
 	private final int SPEED_LIMIT = 35;	//maximum game speed
-	BufferedImage snakeLogo;
-	BufferedImage snakeLogoNegative;
+	private BufferedImage snakeLogo;
+	private BufferedImage snakeLogoNegative;
+	private int logoSize = 600;	//default snakeLogo size
 	/***Snake attributes***/
 	private int xAtStart = 600;
-	private int yAtStart = 400;			//start coordinates of snake
+	private int yAtStart = 400;			//default start coordinates of snake
 	private int length = 1;	//number of snake's parts at the beginning of the game
 	private final int SNAKE_SIZE = 20; //width and height of snake in pixels
 	private boolean isMovingLeft = false;
@@ -56,29 +56,12 @@ public class GameBoard
 	 * Creates components essential to start a game.
 	 * Creates game field, adds key listeners, JTextField, which displays player score and so on
 	 */
-	public void prepareToStartGame()
+	public void prepareToStartGame(int screenWidth, int screenHeight)
 	{
-		field = new GameField();
-		field.setLayout(null);
-		field.setFocusable(true);
-		field.addKeyListener(new KeyListener());
-		field.add(playerScore);
-		playerScore.setBounds(X_SIZE/2-75, 0, 150, SNAKE_SIZE);
-		field.setPreferredSize(new Dimension (X_SIZE, Y_SIZE));
-		playerScore.setEditable(false);
-		try 
-		{
-		snakeLogo = ImageIO.read(MainMenu.class.getResourceAsStream("/SnakeLogo.png"));
-		snakeLogoNegative = ImageIO.read(MainMenu.class.getResourceAsStream("/SnakeLogoNegative.png"));
-		} catch (IOException e1) 
-		{
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-			System.exit(1);
-		}
-		xCoordinates[0] = xAtStart;
-		yCoordinates[0] = yAtStart;	//sets the beginning location of snake's head
-		spawnApple();	//spawns first apple
+		prepareSize(screenWidth, screenHeight);
+		createGameField();
+		loadImages();
+		spawnApple();
 	}	//function preparetoStartGame
 	
 	/**
@@ -261,6 +244,93 @@ public class GameBoard
 	}	//function checkIfGameOver
 	
 	/**
+	 * Prepares size of gamefield depending on screen resolution.
+	 * Also sets starting coordinates to match new size.
+	 */
+	private void prepareSize(int screenWidth, int screenHeight)
+	{
+		/*sets gamefield size*/
+		X_SIZE = screenWidth/2;
+		Y_SIZE = screenHeight/2;
+		
+		/*makes gamefield size a multiplication of snake size*/
+		if (X_SIZE % SNAKE_SIZE != 0)
+		{
+			int tmp = X_SIZE % SNAKE_SIZE;
+			X_SIZE -= tmp;
+		}
+		if (Y_SIZE % SNAKE_SIZE != 0)
+		{
+			int tmp = Y_SIZE % SNAKE_SIZE;
+			Y_SIZE -= tmp;
+		}
+		
+		/*sets starting coordinates of snake*/
+		xAtStart = X_SIZE/2;
+		yAtStart = Y_SIZE/2;
+		
+		/*makes starting coordinates a multiplication of snake size*/
+		if (xAtStart % SNAKE_SIZE != 0)
+		{
+			int tmp = xAtStart % SNAKE_SIZE;
+			xAtStart -= tmp;
+		}
+		if (yAtStart % SNAKE_SIZE != 0)
+		{
+			int tmp = yAtStart % SNAKE_SIZE;
+			yAtStart -= tmp;
+		}
+		xCoordinates[0] = xAtStart;
+		yCoordinates[0] = yAtStart;	//sets the beginning location of snake's head
+	}//function prepareSize
+	
+	/**
+	 * Creates game field and prepares its components.
+	 * Sets layout, focusable, adds keylistener, playerscore and so on
+	 */
+	private void createGameField()
+	{
+		field = new GameField();
+		field.setLayout(null);
+		field.setFocusable(true);
+		field.addKeyListener(new KeyListener());
+		field.add(playerScore);
+		playerScore.setBounds(X_SIZE/2-75, 0, 150, SNAKE_SIZE);
+		playerScore.setEditable(false);
+		field.setPreferredSize(new Dimension (X_SIZE, Y_SIZE));
+	}//function createGameField
+	
+	/**
+	 * Loads images and resizes them.
+	 * Size is changed according to screen resolution.
+	 */
+	private void loadImages()
+	{
+		/*loads images from file*/
+		try 
+		{
+		snakeLogo = ImageIO.read(MainMenu.class.getResourceAsStream("/SnakeLogo.png"));
+		snakeLogoNegative = ImageIO.read(MainMenu.class.getResourceAsStream("/SnakeLogoNegative.png"));
+		} catch (IOException e1) 
+		{
+			e1.printStackTrace();
+			System.exit(1);
+		}
+		logoSize = (Y_SIZE < X_SIZE) ? (Y_SIZE-4*SNAKE_SIZE) : (X_SIZE-4*SNAKE_SIZE);	//sets snakeLogo size depending on gamefield size
+		/*resizes snakeLogo*/
+		BufferedImage thumbImage = new BufferedImage(logoSize, logoSize, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2d = thumbImage.createGraphics();
+		g2d.drawImage(snakeLogo.getScaledInstance(logoSize, logoSize, Image.SCALE_SMOOTH), 0, 0, logoSize, logoSize, null);
+		snakeLogo = thumbImage;
+		/*resizes snakeLogoNegative*/
+		thumbImage = new BufferedImage(logoSize, logoSize, BufferedImage.TYPE_INT_ARGB);
+		g2d = thumbImage.createGraphics();
+		g2d.drawImage(snakeLogoNegative.getScaledInstance(logoSize, logoSize, Image.SCALE_SMOOTH), 0, 0, logoSize, logoSize, null);
+		g2d.dispose();
+		snakeLogoNegative = thumbImage;
+	}//function loadImages
+	
+	/**
 	 * JPanel in which the game takes place.
 	 * Takes care of displaying everything that happens during the game.
 	 */
@@ -299,7 +369,7 @@ public class GameBoard
 			/*resets background*/
 			g.setColor(Color.black);
 			g.fillRect(SNAKE_SIZE,SNAKE_SIZE, X_SIZE-2*SNAKE_SIZE, Y_SIZE-2*SNAKE_SIZE);
-			g.drawImage(snakeLogo, this.getWidth()/2 - 245, this.getHeight()/2-245, null);
+			g.drawImage(snakeLogo, this.getWidth()/2 - logoSize/2, this.getHeight()/2-logoSize/2, null);
 			
 			/*displays current score*/
 			playerScore.setText("Your score: " + Integer.toString(score));
@@ -314,12 +384,12 @@ public class GameBoard
 				/*logo blinks after eating an enhanced apple*/
 				if (!blinkFlag)
 				{
-					g.drawImage(snakeLogo, this.getWidth()/2 - 245, this.getHeight()/2-245, null);
+					g.drawImage(snakeLogo, this.getWidth()/2 - logoSize/2, this.getHeight()/2-logoSize/2, null);
 					blinkFlag = true;
 				}
 				else 
 				{
-					g.drawImage(snakeLogoNegative, this.getWidth()/2 - 245, this.getHeight()/2-245, null);
+					g.drawImage(snakeLogoNegative, this.getWidth()/2 - logoSize/2, this.getHeight()/2-logoSize/2, null);
 					blinkFlag = false;
 				}
 				
@@ -448,4 +518,8 @@ public class GameBoard
 		return field;
 	}
 	
+	public int getlogoSize()
+	{
+		return logoSize;
+	}
 }	//class GameBoard

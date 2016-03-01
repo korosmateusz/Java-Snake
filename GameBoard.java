@@ -44,7 +44,7 @@ public class GameBoard
 	/***Apple attributes***/
 	private final double CHANCE_OF_ENHANCED_APPLE = 0.1;
 	private int enhancedAppleTime = 5;
-	long enhancedAppleStartTime;	//time at which enhanced apple was spawned (using System.nanoTime)
+	private long enhancedAppleStartTime;	//time at which enhanced apple was spawned (using System.nanoTime)
 	private boolean isEnhancedApple = false;	//flag that checks whether enhanced apple is on board
 	private int xAppleCoordinate = SNAKE_SIZE; 
 	private int yAppleCoordinate = SNAKE_SIZE; //sets starting coordinates of apple just in case the function fails to do it
